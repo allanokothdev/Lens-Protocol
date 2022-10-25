@@ -1,25 +1,54 @@
-import logo from './logo.svg';
-import './App.css';
+import { gql } from "@apollo/client";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
+import React, { useEffect, useState } from "react";
+import client from "./client";
+import Card from "./components/card";
 
-function App() {
+export default function Home() {
+  const [users, setUsers] = useState([]);
+
+  const fetchUsers = async () => {
+    let query = gql` 
+      query ExploreProfiles { 
+        exploreProfiles(request: { sortCriteria: MOST_FOLLOWERS }) { 
+          items { 
+            id 
+            name 
+            handle 
+            picture { 
+              ... on NftImage { 
+                uri 
+              } 
+              ... on MediaSet { 
+                original { 
+                  url 
+                  mimeType 
+                } 
+              } 
+            } 
+            stats { 
+              totalFollowers 
+              totalFollowing 
+              totalPosts 
+            } 
+          } 
+        } 
+      } 
+    `;
+    client.query({ query }).then(({ data }) => {
+      setUsers(data.exploreProfiles.items);
+    });
+  };
+  useEffect(() => {
+    fetchUsers();
+  }, []);
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className="flex flex-col items-center justify-center ">
+      <h1 className="text-4xl font-semibold mb-4">Lens App</h1>
+      <ConnectButton />
+      {users.map((user) => (
+        <Card user={user} />
+      ))}
     </div>
   );
-}
-
-export default App;
+} 
